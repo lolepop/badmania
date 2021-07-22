@@ -1,14 +1,15 @@
-import "./style.css"
+import "./style.css";
 import * as THREE from "three";
-import osuMapUrl from "./map1.osu?raw"
+import osuMapUrl from "./map1.osu?raw";
 import * as Stats from "stats.js";
-import { Howl } from 'howler';
+import { Howl } from "howler";
 import Playfield from "./game/playfield";
+import Skin from "./game/skin";
 
 function main()
 {
     const stats = new Stats();
-    stats.showPanel(0);
+    stats.showPanel(1);
     document.body.appendChild(stats.dom);
 
     const canvas = document.querySelector('#c');
@@ -20,29 +21,45 @@ function main()
     });
     const scene = new THREE.Scene();
 
-    const aspectRatio = window.innerWidth / window.innerHeight;
-    const camera = new THREE.OrthographicCamera(-aspectRatio, aspectRatio, 1, -1, 0.1, 100);
+    // const aspectRatio = window.innerWidth / window.innerHeight;
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
     console.log(camera);
 
-    // const boxSize = 0.2;
-    // const geometry = new THREE.BoxGeometry(boxSize, boxSize * .3, 1);
-    // geometry.translate(0, boxSize * .3 / 2, 0);
-    
-    // const lnGeometry = new THREE.BoxGeometry(boxSize * .75, 1, 1);
-    // lnGeometry.translate(0, 1/2, 0);
-    
-    // const material = new THREE.MeshBasicMaterial({color: 0x44aa88});
+    function resizeRendererToDisplaySize(renderer) {
+        const canvas = renderer.domElement;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+            renderer.setSize(width, height, false);
+        }
+        return needResize;
+    }
 
-    // renderer.render(scene, camera);
+    function handleResize(renderer, camera)
+    {
+        const canvas = renderer.domElement;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        if (canvas.width !== width || canvas.height !== height)
+        {
+            renderer.setSize(width, height, false);
+            const aspect = width / height;
+            camera.left = -aspect;
+            camera.right = aspect;
+            camera.updateProjectionMatrix();
+        }
+    }
 
     let speed = .0035;
     const keys = 4;
     let updateTime = -1;
     let time = 0;
 
-    const field = new Playfield(speed);
+    const field = new Playfield(speed, new Skin(renderer));
     field.loadOsuMap(osuMapUrl)
     console.log(field);
+    // return;
 
     field.lanes.forEach((l, i) => {
         l.laneGroup.position.x = i / keys;
@@ -58,13 +75,15 @@ function main()
     {
         stats.begin();
 
+        handleResize(renderer, camera);
+
         const nowTime = new Date().getTime();
         if (updateTime > 0)
             time += nowTime - updateTime;
         updateTime = nowTime;
 
         const error = time - audio.seek() * 1000;
-        if (Math.abs(error) > 4)
+        if (Math.abs(error) > 10)
         {
             // console.log(`error over threshold: ${error}`);
             time = audio.seek() * 1000;

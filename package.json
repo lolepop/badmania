@@ -2,15 +2,16 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "serve": "vite preview"
   },
   "devDependencies": {
+    "typescript": "^4.3.2",
     "vite": "^2.4.2"
   },
   "dependencies": {
+    "hotkeys-js": "^3.8.7",
     "howler": "^2.2.3",
-    "osu-parser": "^0.3.3",
     "stats.js": "^0.17.0",
     "three": "^0.130.1"
   }
