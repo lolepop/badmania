@@ -2,11 +2,22 @@ import * as THREE from "three";
 
 export default class Skin
 {
-    constructor(renderer)
-    {
-        this.noteScale = 0.23;
-        this.receptorOffset = 0.1;
+    noteScale: number = 0.23;
+    receptorOffset: number = 0.1; // vertical offset of hit receptors from edge of screen
+    
+    renderer: THREE.WebGLRenderer;
 
+    noteGeometry: THREE.BoxGeometry;
+    holdBodyGeometry: THREE.BoxGeometry;
+
+    noteMaterial: THREE.MeshBasicMaterial;
+    holdBodyMaterial: THREE.MeshBasicMaterial;
+    holdCapMaterial: THREE.MeshBasicMaterial;
+    noteReceptorMaterial: THREE.MeshBasicMaterial;
+    noteReceptorActiveMaterial: THREE.MeshBasicMaterial;
+
+    constructor(renderer: THREE.WebGLRenderer)
+    {
         this.renderer = renderer;
 
         this.noteGeometry = new THREE.BoxGeometry(1, 1, 1);
@@ -27,7 +38,7 @@ export default class Skin
         this.noteReceptorActiveMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/receptoractive.png")), transparent: true});
     }
 
-    applyTextureSettings(map)
+    applyTextureSettings(map: THREE.Texture)
     {
         map.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
         map.minFilter = THREE.NearestFilter;
@@ -35,7 +46,7 @@ export default class Skin
         return map;
     }
 
-    meshFrom(geometry, material, z = -1)
+    meshFrom(geometry: THREE.BoxGeometry, material: THREE.MeshBasicMaterial, z = -1)
     {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.z = z;
