@@ -11,6 +11,15 @@ export default class Playfield
         this.lanes = [];
     }
 
+    handleInput(time, laneState)
+    {
+        for (const [i, s] of laneState.entries())
+        {
+            const lane = this.lanes[i];
+            lane.handleInput(time, s);
+        }
+    }
+
     loadOsuMap(obj)
     {
         const map = OsuMap.fromString(obj);

@@ -10,7 +10,6 @@
     "vite": "^2.4.2"
   },
   "dependencies": {
-    "hotkeys-js": "^3.8.7",
     "howler": "^2.2.3",
     "stats.js": "^0.17.0",
     "three": "^0.130.1"

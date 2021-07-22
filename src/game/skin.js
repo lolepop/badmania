@@ -4,7 +4,7 @@ export default class Skin
 {
     constructor(renderer)
     {
-        this.noteScale = 0.2;
+        this.noteScale = 0.23;
         this.receptorOffset = 0.1;
 
         this.renderer = renderer;
@@ -24,6 +24,7 @@ export default class Skin
         this.holdBodyMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/holdbody.png")), transparent: true });
         this.holdCapMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/holdcap.png")), transparent: true });
         this.noteReceptorMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/receptor.png")), transparent: true});
+        this.noteReceptorActiveMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/receptoractive.png")), transparent: true});
     }
 
     applyTextureSettings(map)

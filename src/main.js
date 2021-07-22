@@ -5,6 +5,7 @@ import * as Stats from "stats.js";
 import { Howl } from "howler";
 import Playfield from "./game/playfield";
 import Skin from "./game/skin";
+import KeyboardInput from "./game/keyboard";
 
 function main()
 {
@@ -25,17 +26,6 @@ function main()
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
     console.log(camera);
 
-    function resizeRendererToDisplaySize(renderer) {
-        const canvas = renderer.domElement;
-        const width = canvas.clientWidth;
-        const height = canvas.clientHeight;
-        const needResize = canvas.width !== width || canvas.height !== height;
-        if (needResize) {
-            renderer.setSize(width, height, false);
-        }
-        return needResize;
-    }
-
     function handleResize(renderer, camera)
     {
         const canvas = renderer.domElement;
@@ -52,7 +42,6 @@ function main()
     }
 
     let speed = .0035;
-    const keys = 4;
     let updateTime = -1;
     let time = 0;
 
@@ -62,7 +51,7 @@ function main()
     // return;
 
     field.lanes.forEach((l, i) => {
-        l.laneGroup.position.x = i / keys;
+        l.laneGroup.position.x = i / field.lanes.length;
         scene.add(l.laneGroup);
     });
 
@@ -74,6 +63,9 @@ function main()
     function render()
     {
         stats.begin();
+
+        const keyboard = new KeyboardInput();
+        keyboard.setup();
 
         handleResize(renderer, camera);
 
@@ -93,6 +85,7 @@ function main()
         {
             for (const n of l.notes)
             {
+                field.handleInput(time, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
                 n.update(time, speed);
             }
         }
