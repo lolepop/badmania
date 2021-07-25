@@ -48,7 +48,7 @@ export default class Skin
 
     meshFrom(geometry: THREE.BoxGeometry, material: THREE.MeshBasicMaterial, z = -1)
     {
-        const mesh = new THREE.Mesh(geometry, material);
+        const mesh = new THREE.Mesh(geometry, material.clone());
         mesh.position.z = z;
         return mesh;
     }

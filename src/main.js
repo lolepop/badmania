@@ -5,7 +5,7 @@ import * as Stats from "stats.js";
 import { Howl } from "howler";
 import Playfield from "./game/playfield";
 import Skin from "./game/skin";
-import KeyboardInput from "./game/keyboard";
+import KeyboardInput from "./input/keyboard";
 
 function main()
 {
@@ -81,17 +81,22 @@ function main()
             time = audio.seek() * 1000;
         }
 
+        // console.log(field.lanes[0].notes[0].state);
+
+        field.handleInput(time, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
+
+        // TODO: start from last hit object, iterate until off screen then stop
         for (const l of field.lanes)
         {
             for (const n of l.notes)
             {
-                field.handleInput(time, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
                 n.update(time, speed);
             }
         }
 
+        renderer.renderLists.dispose();
         renderer.render(scene, camera);
-
+        // return;
         stats.end();
         requestAnimationFrame(render);
     }

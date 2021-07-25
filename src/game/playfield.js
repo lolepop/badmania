@@ -13,11 +13,25 @@ export default class Playfield
 
     handleInput(time, laneState)
     {
-        for (const [i, s] of laneState.entries())
-        {
-            const lane = this.lanes[i];
-            lane.handleInput(time, s);
-        }
+        const autoPlay = n => {
+            const st = n.startTime;
+            const et = n.endTime;
+        
+            const d = 60;
+        
+            const isInRange = (min, max) => time >= min && time <= max;
+        
+            return isInRange(st - d, st + d) || // note within judge
+                (n.isLn && isInRange(st - d, et + d)); // note and ln end within judge
+        };
+
+        // console.log(this.lanes[0].lastNoteHitIndex);
+        this.lanes.map((l, i) => {
+            // if (l.currentNote)
+            //     laneState[i] = autoPlay(l.currentNote);
+            // if (laneState[i]) console.log(laneState[i]);
+            l.handleInput(time, laneState[i])
+        });
     }
 
     loadOsuMap(obj)
@@ -30,6 +44,8 @@ export default class Playfield
         this.lanes = map.HitObjects.reduce((acc, o) => {
             const lane = Math.trunc(o.x * keys / 512);
             const currLane = acc.laneObjects[lane];
+
+            // if (lane !== 0) return acc;
             
             if (o.type === "maniaHold")
                 currLane.addNote(o.time, o.endTime);

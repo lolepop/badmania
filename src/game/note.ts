@@ -1,10 +1,30 @@
 import * as THREE from "three";
 import Skin from "./skin";
 
-export default class Note
+export enum NoteState
+{
+    NOT_HIT,
+    HIT, // note is fully hit (i.e. single note hit/ln fully held)
+    HELD, // ln currently held
+    MISSED
+}
+
+export enum HitJudge
+{
+    NOT_HIT,
+    EXCELLENT,
+    MISSED
+}
+
+export class Note
 {
     startTime: number;
     endTime?: number;
+
+    hitTime?: number;
+    endHitTime?: number;
+
+    state: NoteState = NoteState.NOT_HIT;
 
     skin: Skin;
 
@@ -39,7 +59,7 @@ export default class Note
 
     getYFromTime(targetTime: number, time: number, speed: number)
     {
-        return (targetTime - time) * speed - 1 + this.skin.receptorOffset;
+        return (targetTime - time) * speed + this.yOrigin;
     }
 
     update(time: number, speed: number)
@@ -47,18 +67,73 @@ export default class Note
         const startPos = this.getYFromTime(this.startTime, time, speed);
         this.noteGroup.position.y = startPos;
 
+        if (!this.isLn && (this.state === NoteState.HIT || this.state === NoteState.MISSED))
+        {
+            (this.mesh.material as THREE.Material).opacity = 0;
+            (this.mesh.material as THREE.Material).needsUpdate = true;
+        }
+
         if (this.isLn)
         {
             const endPos = this.getYFromTime(this.endTime!, time, speed);
-            const relativeEnd = endPos - startPos;
+            const origin = this.yOrigin;
+            const lastHit = this.endHitTime && this.getYFromTime(this.endHitTime, time, speed);
+
+            let relativeEnd = endPos - startPos;
+            if (origin > startPos)
+            {
+                // FIXME: scale down end cap when reach past the point
+                // if (origin >= endPos)
+                // {
+                //     debugger;
+                //     this.lnCap!.scale.y = relativeEnd;
+                // }
+                if (this.state === NoteState.HELD)
+                {
+                    relativeEnd = endPos - origin;
+                    this.noteGroup.position.y = origin;
+                }
+                else if (lastHit && lastHit >= startPos)
+                {
+                    relativeEnd = endPos - lastHit;
+                    this.noteGroup.position.y = lastHit;
+                }
+            }
+            
             this.lnMesh!.scale.y = relativeEnd - this.skin.noteScale / 2;
             this.lnCap!.position.y = relativeEnd;
+
         }
+    }
+
+    checkHit(time: number, end = false): HitJudge
+    {
+        // const timeOff = Math.abs(time - (end ? this.endTime! : this.startTime));
+        const timeOff = time - this.startTime;
+        const timeAbs = Math.abs(timeOff);
+
+        if (timeAbs <= 180)
+        {
+            if (timeAbs <= 60)
+                return HitJudge.EXCELLENT;
+            return HitJudge.MISSED;
+        }
+        else if (timeOff > 0)
+        {
+            return HitJudge.MISSED;
+        }
+        return HitJudge.NOT_HIT;
     }
 
     get isLn()
     {
         return this.endTime ?? false;
+    }
+
+    get yOrigin()
+    {
+        // offset bottom of screen by skin visual offset
+        return this.skin.receptorOffset - 1;
     }
 
 }
