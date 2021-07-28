@@ -1,11 +1,12 @@
 import * as THREE from "three";
-import { Note, HitJudge, NoteState } from "./note";
+import { HitJudge, IJudgement } from "./judge/IJudgement";
+import { Note, NoteState } from "./note";
 import Skin from "./skin";
 
 export default class Lane
 {
     notes: Note[] = [];
-    isActive: boolean = false; // is lane pressed by player
+    lastActiveState: boolean = false; // is lane pressed by player
     lastNoteHitIndex = -1;
     
     skin: Skin;
@@ -27,101 +28,102 @@ export default class Lane
         return this.notes[this.lastNoteHitIndex + 1];
     }
 
-    handleInput(time: number, isActive: boolean)
+    handleLnJudge(n: Note, time: number, isLaneActive: boolean, judgement: IJudgement)
     {
-        if (this.isActive !== isActive)
+        const judge = judgement.getJudge(time, n.startTime);
+
+        // ln is being held past starting timing
+        if (isLaneActive && n.state === NoteState.HELD && time >= n.endTime!)
+        {
+            // auto count hit once past end point 
+            console.log("holding ln");
+            return n.setState(NoteState.HIT, time);
+        }
+
+        const laneStateHasChanged = this.lastActiveState !== isLaneActive;
+        if (laneStateHasChanged)
+        {
+            // ln press
+            if (isLaneActive)
+            {
+                console.log("ln hit");
+                return n.setState(judge === HitJudge.MISS ? NoteState.MISSED : NoteState.HELD, time);
+            }
+            else
+            {
+                // ln release
+                // const endJudge = n.checkHit(time, true);
+                
+                console.log("ln release")
+                // release while ln was held and get release judgement
+                if (n.state === NoteState.HELD)
+                {
+                    // n.state = endJudge === HitJudge.MISSED ? NoteState.MISSED : NoteState.HIT;
+                    return n.setState(n.endTime! - time <= 200 ? NoteState.HIT : NoteState.MISSED, time);
+                }
+            }
+        }
+
+        return null;
+
+    }
+
+    handleNoteJudge(n: Note, time: number, isLaneActive: boolean, judgement: IJudgement)
+    {
+        const judge = judgement.getJudge(time, n.startTime);
+
+        const laneStateHasChanged = this.lastActiveState !== isLaneActive;
+        if (laneStateHasChanged && judge !== HitJudge.NOT_HIT && isLaneActive)
+        {
+            console.log("normal note hit");
+            // player pressed key and triggers miss judgement
+            return n.setState(judge === HitJudge.MISS ? NoteState.MISSED : NoteState.HIT, time);
+        }
+
+        return null;
+
+    }
+
+    handleNoteInput(n: Note, time: number, isActive: boolean, judgement: IJudgement)
+    {
+        const judge = judgement.getJudge(time, n.startTime);
+
+        // note passed without player hitting it
+        if (n.state !== NoteState.HELD && judge === HitJudge.MISS && time > n.startTime)
+        {
+            console.log("note expired");
+            return n.setState(NoteState.MISSED, time);
+        }
+
+        if (n.isLn)
+            return this.handleLnJudge(n, time, isActive, judgement);
+        else
+            return this.handleNoteJudge(n, time, isActive, judgement);
+
+    }
+
+    handleInput(time: number, isActive: boolean, judgement: IJudgement)
+    {
+        if (this.lastActiveState !== isActive)
         {
             this.noteReceptor.material = isActive ? this.skin.noteReceptorActiveMaterial : this.skin.noteReceptorMaterial;
             this.noteReceptor.material.needsUpdate = true;
         }
 
         const n = this.currentNote;
-        if (n === undefined) return;
-
-        const handleNoteState = () => {
-
-            const judge = n.checkHit(time);
-
-            // ln is being held past starting timing
-            if (isActive && n.state === NoteState.HELD && time >= n.endTime!)
+        if (n !== undefined)
+        {
+            const noteJudge = this.handleNoteInput(n, time, isActive, judgement);
+            if (noteJudge !== null) // not null if note has changed state
             {
-                // auto count hit once past end point 
-                console.log("holding ln");
-                n.state = NoteState.HIT;
-                n.endHitTime = time;
-                this.lastNoteHitIndex++;
-                return;
-            }
-    
-            if (this.isActive !== isActive)
-            {
-                // normal note press
-                if (!n.isLn)
-                {
-                    if (judge !== HitJudge.NOT_HIT && isActive)
-                    {
-                        console.log("normal note hit");
-                        // player pressed key and triggers miss judgement
-                        n.state = judge === HitJudge.MISSED ? NoteState.MISSED : NoteState.HIT;
-                        n.hitTime = time;
-                        this.lastNoteHitIndex++;
-                        return;
-                    }
-                }
-                else
-                {
-                    // ln press
-                    if (isActive)
-                    {
-                        console.log("ln hit");
-                        if (judge === HitJudge.MISSED)
-                        {
-                            n.state = NoteState.MISSED;
-                            n.hitTime = time;
-                            this.lastNoteHitIndex++;
-                            return;
-                        }
-                        else
-                        {
-                            n.state = NoteState.HELD;
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        // ln release
-                        // const endJudge = n.checkHit(time, true);
-                        
-                        console.log("ln release")
-                        // release while ln was held and get release judgement
-                        if (n.state === NoteState.HELD)
-                        {
-                            // n.state = endJudge === HitJudge.MISSED ? NoteState.MISSED : NoteState.HIT;
-                            n.state = n.endTime! - time <= 200 ? NoteState.HIT : NoteState.MISSED;
-                            n.endHitTime = time;
-                            this.lastNoteHitIndex++;
-                            return;
-                        }
-    
-                    }
-                }
+                if (noteJudge !== NoteState.HELD)
+                    this.lastNoteHitIndex++;
             }
 
-            // note passed without player hitting it
-            if (n.state !== NoteState.HELD && judge === HitJudge.MISSED && time > n.startTime)
-            {
-                console.log("note expired");
-                n.state = NoteState.MISSED;
-                n.hitTime = time + 180;
-                this.lastNoteHitIndex++;
-                return;
-            }
 
-        };
-        
-        handleNoteState();
-    
-        this.isActive = isActive;
+        }
+
+        this.lastActiveState = isActive;
 
     }
 

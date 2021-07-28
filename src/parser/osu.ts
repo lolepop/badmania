@@ -66,19 +66,21 @@ export default class OsuMap
             {
             case "slider":
                 const curve = values[5].split("|");
-                return Object.assign(ret, {
+                return {
+                    ...ret,
                     curveType: ["bezier", "catmull", "linear", "circle"]["BCLP".indexOf(curve[0])],
                     curvePoints: curve.slice(1).map(a => { const b = a.split(":"); return { x: parseInt(b[0]), y: parseInt(b[1]) }; }),
                     slides: parseInt(values[6]),
                     length: parseFloat(values[7]),
                     edgeSounds: values[8].split("|").map(a => parseInt(a)),
                     edgeSets: values[9].split("|").map(a => { const b = a.split(":"); return { normalSet: parseInt(b[0]), additionSet: parseInt(b[1]) } })
-                });
+                };
             case "spinner":
             case "maniaHold":
-                return Object.assign(ret, {
+                return {
+                    ...ret,
                     endTime: parseInt(values[5])
-                });
+                };
             case "circle":
             default:
                 return ret;

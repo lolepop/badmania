@@ -6,6 +6,7 @@ import { Howl } from "howler";
 import Playfield from "./game/playfield";
 import Skin from "./game/skin";
 import KeyboardInput from "./input/keyboard";
+import { EtternaJudgement } from "./game/judge/IJudgement";
 
 function main()
 {
@@ -45,7 +46,10 @@ function main()
     let updateTime = -1;
     let time = 0;
 
-    const field = new Playfield(speed, new Skin(renderer));
+    const keyboard = new KeyboardInput();
+    keyboard.setup();
+
+    const field = new Playfield(speed, new Skin(renderer), new EtternaJudgement(4));
     field.loadOsuMap(osuMapUrl)
     console.log(field);
     // return;
@@ -64,12 +68,10 @@ function main()
     {
         stats.begin();
 
-        const keyboard = new KeyboardInput();
-        keyboard.setup();
-
         handleResize(renderer, camera);
 
-        const nowTime = new Date().getTime();
+        // const nowTime = new Date().getTime();
+        const nowTime = performance.now();
         if (updateTime > 0)
             time += nowTime - updateTime;
         updateTime = nowTime;
@@ -88,6 +90,15 @@ function main()
         // TODO: start from last hit object, iterate until off screen then stop
         for (const l of field.lanes)
         {
+            const startIndex = l.lastNoteHitIndex;
+            for (let i = startIndex; i < l.notes.length; i++)
+            {
+                const n = l.notes[i];
+                if (n?.isAboveScreen(time, speed))
+                    break;
+                n?.update(time, speed);
+            }
+
             for (const n of l.notes)
             {
                 n.update(time, speed);

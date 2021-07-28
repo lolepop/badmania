@@ -1,40 +1,49 @@
 import * as THREE from "three";
 import OsuMap from "../parser/osu";
+import { IJudgement } from "./judge/IJudgement";
 import Lane from "./lane";
+import { Note } from "./note";
+import Skin from "./skin";
 
 export default class Playfield
 {
-    constructor(speed, skin)
+    baseSpeed: number;
+    skin: Skin;
+    lanes: Lane[];
+    judgement: IJudgement;
+
+    constructor(speed: number, skin: Skin, judgement: IJudgement)
     {
         this.baseSpeed = speed;
         this.skin = skin;
         this.lanes = [];
+        this.judgement = judgement;
     }
 
-    handleInput(time, laneState)
+    handleInput(time: number, laneState: boolean[])
     {
-        const autoPlay = n => {
+        const autoPlay = (n: Note): boolean => {
             const st = n.startTime;
             const et = n.endTime;
         
-            const d = 60;
+            const d = this.judgement.autoPlayHitTime;
         
-            const isInRange = (min, max) => time >= min && time <= max;
+            const isInRange = (min: number, max: number) => time >= min && time <= max;
         
             return isInRange(st - d, st + d) || // note within judge
-                (n.isLn && isInRange(st - d, et + d)); // note and ln end within judge
+                (n.isLn && isInRange(st - d, et! + d)); // note and ln end within judge
         };
 
         // console.log(this.lanes[0].lastNoteHitIndex);
         this.lanes.map((l, i) => {
-            // if (l.currentNote)
-            //     laneState[i] = autoPlay(l.currentNote);
+            if (l.currentNote)
+                laneState[i] = autoPlay(l.currentNote);
             // if (laneState[i]) console.log(laneState[i]);
-            l.handleInput(time, laneState[i])
+            l.handleInput(time, laneState[i], this.judgement);
         });
     }
 
-    loadOsuMap(obj)
+    loadOsuMap(obj: string)
     {
         const map = OsuMap.fromString(obj);
         console.log(map);
@@ -48,7 +57,7 @@ export default class Playfield
             // if (lane !== 0) return acc;
             
             if (o.type === "maniaHold")
-                currLane.addNote(o.time, o.endTime);
+                currLane.addNote(o.time, (<any>o).endTime);
             else
                 currLane.addNote(o.time);
 

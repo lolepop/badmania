@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { IJudgement } from "./judge/IJudgement";
 import Skin from "./skin";
 
 export enum NoteState
@@ -9,19 +10,19 @@ export enum NoteState
     MISSED
 }
 
-export enum HitJudge
-{
-    NOT_HIT,
-    EXCELLENT,
-    MISSED
-}
+// export enum HitJudge
+// {
+//     NOT_HIT,
+//     EXCELLENT,
+//     MISSED
+// }
 
 export class Note
 {
     startTime: number;
     endTime?: number;
 
-    hitTime?: number;
+    startHitTime?: number;
     endHitTime?: number;
 
     state: NoteState = NoteState.NOT_HIT;
@@ -106,34 +107,59 @@ export class Note
         }
     }
 
-    checkHit(time: number, end = false): HitJudge
+    setState(state: NoteState, time?: number)
     {
-        // const timeOff = Math.abs(time - (end ? this.endTime! : this.startTime));
-        const timeOff = time - this.startTime;
-        const timeAbs = Math.abs(timeOff);
+        if (state === NoteState.HELD)
+            if (!this.isLn)
+                throw new Error("Regular notes cannot be set to held state");
+        else if (time === null)
+            throw new Error("Time required when setting non-held states");
 
-        if (timeAbs <= 180)
+        if (state !== NoteState.HELD)
         {
-            if (timeAbs <= 60)
-                return HitJudge.EXCELLENT;
-            return HitJudge.MISSED;
+            if (this.state === NoteState.HELD)
+                this.endHitTime = time;
+            else
+                this.startHitTime = time;
         }
-        else if (timeOff > 0)
-        {
-            return HitJudge.MISSED;
-        }
-        return HitJudge.NOT_HIT;
+
+        this.state = state;
+        return state;
     }
+
+    // checkHit(time: number, end = false): HitJudge
+    // {
+    //     // const timeOff = Math.abs(time - (end ? this.endTime! : this.startTime));
+    //     const timeOff = time - this.startTime;
+    //     const timeAbs = Math.abs(timeOff);
+
+    //     if (timeAbs <= 180)
+    //     {
+    //         if (timeAbs <= 60)
+    //             return HitJudge.EXCELLENT;
+    //         return HitJudge.MISSED;
+    //     }
+    //     else if (timeOff > 0)
+    //     {
+    //         return HitJudge.MISSED;
+    //     }
+    //     return HitJudge.NOT_HIT;
+    // }
 
     get isLn()
     {
-        return this.endTime ?? false;
+        return !!this.endTime;
     }
 
     get yOrigin()
     {
         // offset bottom of screen by skin visual offset
         return this.skin.receptorOffset - 1;
+    }
+
+    isAboveScreen(time: number, speed: number)
+    {
+        return this.getYFromTime(this.startTime, time, speed) > 1 || (this.isLn && this.getYFromTime(this.endTime!, time, speed) > 1);
     }
 
 }
