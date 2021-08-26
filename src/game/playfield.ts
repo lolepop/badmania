@@ -4,20 +4,25 @@ import { IJudgement } from "./judge/IJudgement";
 import Lane from "./lane";
 import { Note } from "./note";
 import Skin from "./skin";
+import Scoreboard from "./ui/scoreboard";
 
 export default class Playfield
 {
+    scoreboard: Scoreboard;
+
     baseSpeed: number;
     skin: Skin;
     lanes: Lane[];
     judgement: IJudgement;
+    // TODO: create scorekeeper and pass into lane.handleNoteInput. use notehitindex to calculate accuracy
 
-    constructor(speed: number, skin: Skin, judgement: IJudgement)
+    constructor(speed: number, skin: Skin, judgement: IJudgement, scoreboard: Scoreboard)
     {
         this.baseSpeed = speed;
         this.skin = skin;
         this.lanes = [];
         this.judgement = judgement;
+        this.scoreboard = scoreboard;
     }
 
     handleInput(time: number, laneState: boolean[])
@@ -36,8 +41,9 @@ export default class Playfield
 
         // console.log(this.lanes[0].lastNoteHitIndex);
         this.lanes.map((l, i) => {
-            if (l.currentNote)
-                laneState[i] = autoPlay(l.currentNote);
+            // if (l.currentNote)
+            //     laneState[i] = autoPlay(l.currentNote);
+            
             // if (laneState[i]) console.log(laneState[i]);
             l.handleInput(time, laneState[i], this.judgement);
         });
