@@ -8,7 +8,7 @@ import KeyboardInput from "../input/keyboard";
 import { EtternaJudgement } from "./judge/IJudgement";
 import Scoreboard from "./ui/scoreboard";
 
-export default (canvas: HTMLCanvasElement) => {
+export default (canvas: HTMLCanvasElement, setUiState: (a: any) => any) => {
     const stats = new Stats();
     stats.showPanel(1);
     document.body.appendChild(stats.dom);
@@ -47,7 +47,7 @@ export default (canvas: HTMLCanvasElement) => {
     const keyboard = new KeyboardInput();
     keyboard.setup();
 
-    const field = new Playfield(speed, new Skin(renderer), new EtternaJudgement(4), new Scoreboard(scene));
+    const field = new Playfield(speed, new Skin(renderer), new EtternaJudgement(4), new Scoreboard(scene, setUiState));
     field.loadOsuMap(osuMapUrl)
     console.log(field);
     // return;
@@ -83,7 +83,7 @@ export default (canvas: HTMLCanvasElement) => {
 
         // console.log(field.lanes[0].notes[0].state);
 
-        field.handleInput(time, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
+        field.update(time, setUiState, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
 
         // TODO: start from last hit object, iterate until off screen then stop
         for (const l of field.lanes)

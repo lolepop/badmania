@@ -1,18 +1,25 @@
 
-export default class Scoreboard
+export interface ScoreboardState
 {
-    // private combo = new TextSprite({
-    //     alignment: 'left',
-    //     color: '#ffffff',
-    //     fontFamily: '"Times New Roman", Times, serif',
-    //     fontSize: 0.55,
-    //     text: "test 12345",
-    // });
+    combo: number;
+}
 
-    constructor(scene: THREE.Scene)
+export default class Scoreboard implements ScoreboardState
+{
+    combo = 0;
+
+    setUiState: (a: any) => any;
+
+    constructor(scene: THREE.Scene, setUiState: (a: any) => any)
     {
-        // scene.add(this.combo);
-        // this.combo.scale.x = 0.01;
-        // this.combo.position.set(0.5, 0.5, -1);
+        this.setUiState = setUiState;
     }
+
+    update()
+    {
+        this.setUiState({
+            combo: this.combo
+        });
+    }
+
 }

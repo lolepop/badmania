@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { HitJudge, IJudgement } from "./judge/IJudgement";
 import { Note, NoteState } from "./note";
 import Skin from "./skin";
+import Scoreboard from "./ui/scoreboard";
 
 export default class Lane
 {
@@ -102,7 +103,7 @@ export default class Lane
 
     }
 
-    handleInput(time: number, isActive: boolean, judgement: IJudgement)
+    update(time: number, isActive: boolean, judgement: IJudgement, scoreboard: Scoreboard)
     {
         if (this.lastActiveState !== isActive)
         {
@@ -117,7 +118,14 @@ export default class Lane
             if (noteJudge !== null) // not null if note has changed state
             {
                 if (noteJudge !== NoteState.HELD)
+                {
                     this.lastNoteHitIndex++;
+                }
+                
+                if (noteJudge === NoteState.MISSED)
+                    scoreboard.combo = 0;
+                else if (noteJudge === NoteState.HIT)
+                    scoreboard.combo++;
             }
 
 

@@ -25,7 +25,7 @@ export default class Playfield
         this.scoreboard = scoreboard;
     }
 
-    handleInput(time: number, laneState: boolean[])
+    update(time: number, setUiState: (a: any) => any, laneState: boolean[])
     {
         const autoPlay = (n: Note): boolean => {
             const st = n.startTime;
@@ -45,8 +45,10 @@ export default class Playfield
             //     laneState[i] = autoPlay(l.currentNote);
             
             // if (laneState[i]) console.log(laneState[i]);
-            l.handleInput(time, laneState[i], this.judgement);
+            l.update(time, laneState[i], this.judgement, this.scoreboard);
         });
+
+        this.scoreboard.update();
     }
 
     loadOsuMap(obj: string)
