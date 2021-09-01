@@ -45,7 +45,9 @@ export default class Playfield
             //     laneState[i] = autoPlay(l.currentNote);
             
             // if (laneState[i]) console.log(laneState[i]);
-            l.update(time, laneState[i], this.judgement, this.scoreboard);
+
+            // TODO: change basespeed to match sv
+            l.update(time, laneState[i], this.baseSpeed, this.judgement, this.scoreboard);
         });
 
         this.scoreboard.update();

@@ -86,22 +86,22 @@ export default (canvas: HTMLCanvasElement, setUiState: (a: any) => any) => {
         field.update(time, setUiState, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
 
         // TODO: start from last hit object, iterate until off screen then stop
-        for (const l of field.lanes)
-        {
-            const startIndex = l.lastNoteHitIndex;
-            for (let i = startIndex; i < l.notes.length; i++)
-            {
-                const n = l.notes[i];
-                if (n?.isAboveScreen(time, speed))
-                    break;
-                n?.update(time, speed);
-            }
+        // for (const l of field.lanes)
+        // {
+        //     const startIndex = l.lastNoteHitIndex;
+        //     for (let i = startIndex; i < l.notes.length; i++)
+        //     {
+        //         const n = l.notes[i];
+        //         if (n?.isAboveScreen(time, speed))
+        //             break;
+        //         n?.update(time, speed);
+        //     }
 
-            for (const n of l.notes)
-            {
-                n.update(time, speed);
-            }
-        }
+        //     for (const n of l.notes)
+        //     {
+        //         n.update(time, speed);
+        //     }
+        // }
 
         renderer.renderLists.dispose();
         renderer.render(scene, camera);

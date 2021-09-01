@@ -42,6 +42,22 @@ export class Note
         this.startTime = startTime;
 
         this.noteGroup.add(this.mesh);
+        this.noteGroup.position.y = 100; // set outside of screen
+    }
+
+    set noteMeshVisible(visible: boolean)
+    {
+        const update = (m?: THREE.Material) => {
+            if (m)
+            {
+                m.opacity = +visible;
+                m.needsUpdate = true;
+            }
+        };
+
+        update(this.mesh.material as THREE.Material);
+        update(this.lnMesh?.material as THREE.Material);
+        update(this.lnCap?.material as THREE.Material);
     }
 
     createLn(endTime: number)
@@ -68,11 +84,8 @@ export class Note
         const startPos = this.getYFromTime(this.startTime, time, speed);
         this.noteGroup.position.y = startPos;
 
-        if (!this.isLn && (this.state === NoteState.HIT || this.state === NoteState.MISSED))
-        {
-            (this.mesh.material as THREE.Material).opacity = 0;
-            (this.mesh.material as THREE.Material).needsUpdate = true;
-        }
+        if (this.state === NoteState.HIT || (!this.isLn && this.state === NoteState.MISSED))
+            this.noteMeshVisible = false;
 
         if (this.isLn)
         {
@@ -127,25 +140,6 @@ export class Note
         return state;
     }
 
-    // checkHit(time: number, end = false): HitJudge
-    // {
-    //     // const timeOff = Math.abs(time - (end ? this.endTime! : this.startTime));
-    //     const timeOff = time - this.startTime;
-    //     const timeAbs = Math.abs(timeOff);
-
-    //     if (timeAbs <= 180)
-    //     {
-    //         if (timeAbs <= 60)
-    //             return HitJudge.EXCELLENT;
-    //         return HitJudge.MISSED;
-    //     }
-    //     else if (timeOff > 0)
-    //     {
-    //         return HitJudge.MISSED;
-    //     }
-    //     return HitJudge.NOT_HIT;
-    // }
-
     get isLn()
     {
         return !!this.endTime;
@@ -157,9 +151,24 @@ export class Note
         return this.skin.receptorOffset - 1;
     }
 
+    private isLnOnScreen(time: number, speed: number)
+    {
+        if (!this.isLn)
+            return false;
+        const y = this.getYFromTime(this.startTime, time, speed);
+        const ey = this.getYFromTime(this.endTime!, time, speed);
+        return ey >= -2 && y <= 1;
+    }
+
+    isNoteOnScreen(time: number, speed: number)
+    {
+        const y = this.getYFromTime(this.startTime, time, speed);
+        return this.isLnOnScreen(time, speed) || ((y >= -2) && y <= 1);
+    }
+
     isAboveScreen(time: number, speed: number)
     {
-        return this.getYFromTime(this.startTime, time, speed) > 1 || (this.isLn && this.getYFromTime(this.endTime!, time, speed) > 1);
+        return this.getYFromTime(this.startTime, time, speed) > 1;
     }
 
 }

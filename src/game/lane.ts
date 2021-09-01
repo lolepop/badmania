@@ -9,6 +9,7 @@ export default class Lane
     notes: Note[] = [];
     lastActiveState: boolean = false; // is lane pressed by player
     lastNoteHitIndex = -1;
+    lastVisualNote = 0; // optimisation for rendering
     
     skin: Skin;
 
@@ -22,6 +23,13 @@ export default class Lane
         this.noteReceptor = skin.noteReceptorMesh;
         this.noteReceptor.position.y = skin.receptorOffset - 1;
         this.laneGroup.add(this.noteReceptor);
+    }
+
+    // visually change note receptor when player presses input key
+    set noteReceptorActive(isActive: boolean)
+    {
+        this.noteReceptor.material = isActive ? this.skin.noteReceptorActiveMaterial : this.skin.noteReceptorMaterial;
+        this.noteReceptor.material.needsUpdate = true;
     }
     
     get currentNote(): Note | undefined
@@ -103,13 +111,26 @@ export default class Lane
 
     }
 
-    update(time: number, isActive: boolean, judgement: IJudgement, scoreboard: Scoreboard)
+    update(time: number, isActive: boolean, speed: number, judgement: IJudgement, scoreboard: Scoreboard)
     {
-        if (this.lastActiveState !== isActive)
-        {
-            this.noteReceptor.material = isActive ? this.skin.noteReceptorActiveMaterial : this.skin.noteReceptorMaterial;
-            this.noteReceptor.material.needsUpdate = true;
+        const updateVisibleNotes = () => {
+            for (let i = this.lastVisualNote; i < this.notes.length; i++)
+            {
+                const n = this.notes[i];
+                if (n.isAboveScreen(time, speed))
+                    break;
+                
+                if (n.isNoteOnScreen(time, speed))
+                    n.update(time, speed);
+                else
+                    this.lastVisualNote = i + 1;
+            }
         }
+
+        if (this.lastActiveState !== isActive)
+            this.noteReceptorActive = isActive;
+
+        updateVisibleNotes();
 
         const n = this.currentNote;
         if (n !== undefined)
