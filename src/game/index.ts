@@ -47,7 +47,7 @@ export default (canvas: HTMLCanvasElement, setUiState: (a: any) => any) => {
     const keyboard = new KeyboardInput();
     keyboard.setup();
 
-    const field = new Playfield(speed, new Skin(renderer), new EtternaJudgement(4), new Scoreboard(scene, setUiState));
+    const field = new Playfield(speed, new Skin(renderer), new EtternaJudgement(4), new Scoreboard(setUiState));
     field.loadOsuMap(osuMapUrl)
     console.log(field);
     // return;
@@ -84,24 +84,6 @@ export default (canvas: HTMLCanvasElement, setUiState: (a: any) => any) => {
         // console.log(field.lanes[0].notes[0].state);
 
         field.update(time, setUiState, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
-
-        // TODO: start from last hit object, iterate until off screen then stop
-        // for (const l of field.lanes)
-        // {
-        //     const startIndex = l.lastNoteHitIndex;
-        //     for (let i = startIndex; i < l.notes.length; i++)
-        //     {
-        //         const n = l.notes[i];
-        //         if (n?.isAboveScreen(time, speed))
-        //             break;
-        //         n?.update(time, speed);
-        //     }
-
-        //     for (const n of l.notes)
-        //     {
-        //         n.update(time, speed);
-        //     }
-        // }
 
         renderer.renderLists.dispose();
         renderer.render(scene, camera);

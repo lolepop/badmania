@@ -132,10 +132,9 @@ export class Note
         {
             if (this.state === NoteState.HELD)
                 this.endHitTime = time;
-            else
-                this.startHitTime = time;
         }
-
+        
+        this.startHitTime ??= time;
         this.state = state;
         return state;
     }

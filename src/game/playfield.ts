@@ -35,17 +35,15 @@ export default class Playfield
         
             const isInRange = (min: number, max: number) => time >= min && time <= max;
         
-            return isInRange(st - d, st + d) || // note within judge
-                (n.isLn && isInRange(st - d, et! + d)); // note and ln end within judge
+            return isInRange(st, st + d) || // note within judge
+                (n.isLn && isInRange(st, et!)); // note and ln end within judge
         };
 
         // console.log(this.lanes[0].lastNoteHitIndex);
-        this.lanes.map((l, i) => {
-            // if (l.currentNote)
-            //     laneState[i] = autoPlay(l.currentNote);
+        this.lanes.forEach((l, i) => {
+            if (l.currentNote)
+                laneState[i] = autoPlay(l.currentNote);
             
-            // if (laneState[i]) console.log(laneState[i]);
-
             // TODO: change basespeed to match sv
             l.update(time, laneState[i], this.baseSpeed, this.judgement, this.scoreboard);
         });

@@ -4,17 +4,18 @@ import { useEffect, useState } from "preact/hooks"
 import initGame from "./game";
 import { ScoreboardState } from "./game/ui/scoreboard";
 
-const Ui = ({ state: { combo } }: { state: ScoreboardState }) => (
+const Ui = ({ state: { combo, accuracy } }: { state: ScoreboardState }) => (
     <div class="fillScreen" style="position: absolute">
         <p style="float: right; color:white">
-            {combo}
+            <p>{combo}</p>
+            <p>{accuracy.toFixed(4)}%</p>
         </p>
     </div>
 );
 
 const WebglGame = () => {
     const canvasRef = createRef<HTMLCanvasElement>();
-    const [uiState, setUiState] = useState<ScoreboardState>({ combo: 0 });
+    const [uiState, setUiState] = useState<ScoreboardState>({ combo: 0, accuracy: 0 });
 
     useEffect(() => {
         const canvas = canvasRef.current;

@@ -37,7 +37,8 @@ export default class Lane
         return this.notes[this.lastNoteHitIndex + 1];
     }
 
-    handleLnJudge(n: Note, time: number, isLaneActive: boolean, judgement: IJudgement)
+    // default stepmania judge system for now. can implement release judge
+    handleLnJudge(n: Note, time: number, isLaneActive: boolean, judgement: IJudgement): [NoteState, number] | null
     {
         const judge = judgement.getJudge(time, n.startTime);
 
@@ -46,7 +47,7 @@ export default class Lane
         {
             // auto count hit once past end point 
             console.log("holding ln");
-            return n.setState(NoteState.HIT, time);
+            return [n.setState(NoteState.HIT, time), n.startHitTime! - n.startTime];
         }
 
         const laneStateHasChanged = this.lastActiveState !== isLaneActive;
@@ -56,7 +57,7 @@ export default class Lane
             if (isLaneActive)
             {
                 console.log("ln hit");
-                return n.setState(judge === HitJudge.MISS ? NoteState.MISSED : NoteState.HELD, time);
+                return [n.setState(judge === HitJudge.MISS ? NoteState.MISSED : NoteState.HELD, time), time - n.startTime];
             }
             else
             {
@@ -68,7 +69,11 @@ export default class Lane
                 if (n.state === NoteState.HELD)
                 {
                     // n.state = endJudge === HitJudge.MISSED ? NoteState.MISSED : NoteState.HIT;
-                    return n.setState(n.endTime! - time <= 200 ? NoteState.HIT : NoteState.MISSED, time);
+                    if (n.endTime! - time <= 200)
+                        return [n.setState(NoteState.HIT, time), n.startHitTime! - n.startTime];
+                    else
+                        return [n.setState(NoteState.MISSED, time), judgement.missTiming];
+                    // return n.setState(n.endTime! - time <= 200 ? NoteState.HIT : NoteState.MISSED, time);
                 }
             }
         }
@@ -77,7 +82,7 @@ export default class Lane
 
     }
 
-    handleNoteJudge(n: Note, time: number, isLaneActive: boolean, judgement: IJudgement)
+    handleNoteJudge(n: Note, time: number, isLaneActive: boolean, judgement: IJudgement): [NoteState, number] | null
     {
         const judge = judgement.getJudge(time, n.startTime);
 
@@ -86,14 +91,14 @@ export default class Lane
         {
             console.log("normal note hit");
             // player pressed key and triggers miss judgement
-            return n.setState(judge === HitJudge.MISS ? NoteState.MISSED : NoteState.HIT, time);
+            return [n.setState(judge === HitJudge.MISS ? NoteState.MISSED : NoteState.HIT, time), time - n.startTime];
         }
 
         return null;
 
     }
 
-    handleNoteInput(n: Note, time: number, isActive: boolean, judgement: IJudgement)
+    handleNoteInput(n: Note, time: number, isActive: boolean, judgement: IJudgement): [NoteState, number] | null
     {
         const judge = judgement.getJudge(time, n.startTime);
 
@@ -101,7 +106,7 @@ export default class Lane
         if (n.state !== NoteState.HELD && judge === HitJudge.MISS && time > n.startTime)
         {
             console.log("note expired");
-            return n.setState(NoteState.MISSED, time);
+            return [n.setState(NoteState.MISSED, time), judgement.missTiming];
         }
 
         if (n.isLn)
@@ -111,7 +116,7 @@ export default class Lane
 
     }
 
-    update(time: number, isActive: boolean, speed: number, judgement: IJudgement, scoreboard: Scoreboard)
+    update(time: number, isActive: boolean, speed: number, judgement: IJudgement, scoreboard: Scoreboard): number | null
     {
         const updateVisibleNotes = () => {
             for (let i = this.lastVisualNote; i < this.notes.length; i++)
@@ -132,20 +137,27 @@ export default class Lane
 
         updateVisibleNotes();
 
+        let hitDelta = null;
         const n = this.currentNote;
         if (n !== undefined)
         {
             const noteJudge = this.handleNoteInput(n, time, isActive, judgement);
             if (noteJudge !== null) // not null if note has changed state
             {
-                if (noteJudge !== NoteState.HELD)
+                let judge;
+                [judge, hitDelta] = noteJudge;
+                if (judge !== NoteState.HELD)
                 {
+                    const score = judgement.scoreHitDelta(hitDelta);
+                    scoreboard.recalculateAccuracy(score, judgement.maxScore);
+                    // console.log(hitDelta, score);
+                    
                     this.lastNoteHitIndex++;
                 }
                 
-                if (noteJudge === NoteState.MISSED)
+                if (judge === NoteState.MISSED)
                     scoreboard.combo = 0;
-                else if (noteJudge === NoteState.HIT)
+                else if (judge === NoteState.HIT)
                     scoreboard.combo++;
             }
 
@@ -153,13 +165,10 @@ export default class Lane
         }
 
         this.lastActiveState = isActive;
+        
+        return hitDelta;
 
     }
-
-    // getVisibleNotes(time)
-    // {
-
-    // }
 
     addNote(startTime: number, endTime = -1)
     {
