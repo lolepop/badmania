@@ -125,10 +125,9 @@ export default class Lane
                 if (n.isAboveScreen(time, speed))
                     break;
                 
-                if (n.isNoteOnScreen(time, speed))
-                    n.update(time, speed);
-                else
-                    this.lastVisualNote = i + 1;
+                n.update(time, speed);
+                if (!n.isNoteOnScreen(time, speed))
+                    this.lastVisualNote = i;
             }
         }
 
