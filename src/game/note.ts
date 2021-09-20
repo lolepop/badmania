@@ -17,6 +17,67 @@ export enum NoteState
 //     MISSED
 // }
 
+class MeshQueue
+{
+    queue: THREE.Mesh[] = [];
+    newMesh: () => THREE.Mesh;
+
+    constructor(newMesh: () => THREE.Mesh)
+    {
+        this.newMesh = newMesh;
+    }
+
+    popOrNew(): THREE.Mesh
+    {
+        if (this.queue.length > 0)
+            return this.queue.pop()!;
+        return this.newMesh();
+    }
+
+    push(mesh?: THREE.Mesh)
+    {
+        if (mesh)
+            this.queue.push(mesh);
+    }
+}
+
+export class FastNoteQueue
+{
+    noteMeshQueue: MeshQueue;
+    lnMeshQueue: MeshQueue;
+    lnCapQueue: MeshQueue;
+
+    skin: Skin;
+
+    constructor(skin: Skin)
+    {
+        this.skin = skin;
+
+        this.noteMeshQueue = new MeshQueue(() => skin.noteMesh);
+        this.lnMeshQueue = new MeshQueue(() => skin.lnMesh);
+        this.lnCapQueue = new MeshQueue(() => skin.lnCapMesh);
+    }
+
+    getNote(isLn: boolean = false)
+    {
+        const noteMesh = this.noteMeshQueue.popOrNew();
+        if (!isLn)
+            return noteMesh;
+
+        const lnMesh = this.lnMeshQueue.popOrNew();
+        const lnCap = this.lnCapQueue.popOrNew();
+        return [noteMesh, lnMesh, lnCap];
+    }
+
+    releaseNote(noteMesh?: THREE.Mesh, lnMesh?: THREE.Mesh, lnCap?: THREE.Mesh)
+    {
+        this.noteMeshQueue.push(noteMesh);
+        this.lnMeshQueue.push(lnMesh);
+        this.lnCapQueue.push(lnCap);
+    }
+
+}
+
 export class Note
 {
     startTime: number;
@@ -28,50 +89,34 @@ export class Note
     state: NoteState = NoteState.NOT_HIT;
 
     skin: Skin;
+    noteQueue: FastNoteQueue;
 
-    mesh: THREE.Mesh; // base note
+    mesh?: THREE.Mesh; // base note
     lnMesh?: THREE.Mesh // ln body
     lnCap?: THREE.Mesh // end ln (goes after the ln body)
 
     noteGroup: THREE.Group = new THREE.Group(); // groups note, ln body and ln cap
 
-    constructor(startTime: number, skin: Skin)
+    constructor(startTime: number, skin: Skin, noteQueue: FastNoteQueue)
     {
         this.skin = skin;
-        this.mesh = skin.noteMesh;
+        // this.mesh = skin.noteMesh;
         this.startTime = startTime;
 
-        this.noteGroup.add(this.mesh);
+        // this.noteGroup.add(this.mesh);
         this.noteGroup.position.y = 100; // set outside of screen
+        this.noteQueue = noteQueue;
     }
 
-    set noteMeshVisible(visible: boolean)
+    set noteVisibility(visible: boolean)
     {
-        const update = (m?: THREE.Material) => {
-            if (m)
-            {
-                m.opacity = +visible;
-                m.needsUpdate = true;
-            }
-        };
-
-        update(this.mesh.material as THREE.Material);
-        update(this.lnMesh?.material as THREE.Material);
-        update(this.lnCap?.material as THREE.Material);
+        this.noteGroup.visible = false;
     }
 
     createLn(endTime: number)
     {
         // set to ln visual origin to middle of the note
-        this.lnMesh = this.skin.lnMesh;
-        this.lnMesh.position.y = this.skin.noteScale / 2;
-
-        this.lnCap = this.skin.lnCapMesh;
-
         this.endTime = endTime;
-
-        this.noteGroup.add(this.lnMesh);
-        this.noteGroup.add(this.lnCap);
     }
 
     getYFromTime(targetTime: number, time: number, speed: number)
@@ -79,13 +124,40 @@ export class Note
         return (targetTime - time) * speed + this.yOrigin;
     }
 
+    private getMeshes()
+    {
+        const r = this.noteQueue.getNote(this.isLn);
+        if (!Array.isArray(r))
+        {
+            this.mesh = r;
+        }
+        else
+        {
+            [this.mesh, this.lnMesh, this.lnCap] = r;
+            this.lnMesh.position.y = this.skin.noteScale / 2;
+
+            this.noteGroup.add(this.lnMesh);
+            this.noteGroup.add(this.lnCap);
+        }
+
+        this.noteGroup.add(this.mesh);
+    }
+
+    releaseMeshes()
+    {
+        this.noteQueue.releaseNote(this.mesh, this.lnMesh, this.lnCap);
+    }
+
     update(time: number, speed: number)
     {
+        if (!this.mesh)
+            this.getMeshes();
+
         const startPos = this.getYFromTime(this.startTime, time, speed);
         this.noteGroup.position.y = startPos;
 
         if (this.state === NoteState.HIT || (!this.isLn && this.state === NoteState.MISSED))
-            this.noteMeshVisible = false;
+            this.noteVisibility = false;
 
         if (this.isLn)
         {

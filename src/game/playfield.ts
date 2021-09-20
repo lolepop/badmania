@@ -2,7 +2,7 @@ import * as THREE from "three";
 import OsuMap from "../parser/osu";
 import { IJudgement } from "./judge/judgement";
 import Lane from "./lane";
-import { Note } from "./note";
+import { FastNoteQueue, Note } from "./note";
 import Skin from "./skin";
 import Scoreboard from "./ui/scoreboard";
 
@@ -14,6 +14,7 @@ export default class Playfield
     skin: Skin;
     lanes: Lane[];
     judgement: IJudgement;
+    noteQueue: FastNoteQueue;
     // TODO: create scorekeeper and pass into lane.handleNoteInput. use notehitindex to calculate accuracy
 
     constructor(speed: number, skin: Skin, judgement: IJudgement, scoreboard: Scoreboard)
@@ -23,6 +24,7 @@ export default class Playfield
         this.lanes = [];
         this.judgement = judgement;
         this.scoreboard = scoreboard;
+        this.noteQueue = new FastNoteQueue(skin);
     }
 
     initScene(scene: THREE.Scene)
@@ -76,7 +78,7 @@ export default class Playfield
 
             return acc;
         }, {
-            laneObjects: [...Array(keys)].map(_ => new Lane(this.skin)),
+            laneObjects: [...Array(keys)].map(_ => new Lane(this.skin, this.noteQueue)),
         }).laneObjects;
 
     }

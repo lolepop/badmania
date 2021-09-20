@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { HitJudge, IJudgement } from "./judge/judgement";
-import { Note, NoteState } from "./note";
+import { FastNoteQueue, Note, NoteState } from "./note";
 import Skin from "./skin";
 import Scoreboard from "./ui/scoreboard";
 
@@ -12,17 +12,19 @@ export default class Lane
     lastVisualNote = 0; // optimisation for rendering
     
     skin: Skin;
+    noteQueue: FastNoteQueue;
 
     noteReceptor: THREE.Mesh;
     laneGroup: THREE.Group = new THREE.Group();
 
-    constructor(skin: Skin)
+    constructor(skin: Skin, noteQueue: FastNoteQueue)
     {
         this.skin = skin;
         
         this.noteReceptor = skin.noteReceptorMesh;
         this.noteReceptor.position.y = skin.receptorOffset - 1;
         this.laneGroup.add(this.noteReceptor);
+        this.noteQueue = noteQueue;
     }
 
     initScene(scene: THREE.Scene)
@@ -132,7 +134,10 @@ export default class Lane
                 
                 n.update(time, speed);
                 if (!n.isNoteOnScreen(time, speed))
-                    this.lastVisualNote = i;
+                {
+                    n.releaseMeshes();
+                    this.lastVisualNote = i + 1;
+                }
             }
         }
 
@@ -176,7 +181,7 @@ export default class Lane
 
     addNote(startTime: number, endTime = -1)
     {
-        const note = new Note(startTime, this.skin);
+        const note = new Note(startTime, this.skin, this.noteQueue);
         if (endTime >= 0)
             note.createLn(endTime);
         
