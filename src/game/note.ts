@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { IJudgement } from "./judge/IJudgement";
+import { IJudgement } from "./judge/judgement";
 import Skin from "./skin";
 
 export enum NoteState

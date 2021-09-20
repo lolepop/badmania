@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { HitJudge, IJudgement } from "./judge/IJudgement";
+import { HitJudge, IJudgement } from "./judge/judgement";
 import { Note, NoteState } from "./note";
 import Skin from "./skin";
 import Scoreboard from "./ui/scoreboard";
@@ -23,6 +23,11 @@ export default class Lane
         this.noteReceptor = skin.noteReceptorMesh;
         this.noteReceptor.position.y = skin.receptorOffset - 1;
         this.laneGroup.add(this.noteReceptor);
+    }
+
+    initScene(scene: THREE.Scene)
+    {
+        scene.add(this.laneGroup);
     }
 
     // visually change note receptor when player presses input key

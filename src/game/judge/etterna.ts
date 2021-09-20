@@ -1,28 +1,9 @@
+import { HitJudge, IJudgement } from "./judgement";
 import * as Util from "../../util";
-
-
-export enum HitJudge
-{
-    MARVELOUS,
-    PERFECT,
-    GREAT,
-    GOOD,
-    MISS,
-    NOT_HIT
-}
-
-export interface IJudgement
-{
-    getJudge(time: number, targetTime: number): HitJudge;
-    get autoPlayHitTime(): number;
-    get missTiming(): number;
-    scoreHitDelta(delta: number): number;
-    get maxScore(): number
-}
 
 // etterna calculations taken from official repo: https://github.com/etternagame/etterna/
 // https://www.desmos.com/calculator/qebv9dcoll
-export class EtternaJudgement implements IJudgement
+export default class EtternaJudgement implements IJudgement
 {
     private readonly timings = [
         [22, 45, 90, 135, 180], // j4

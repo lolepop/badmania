@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import OsuMap from "../parser/osu";
-import { IJudgement } from "./judge/IJudgement";
+import { IJudgement } from "./judge/judgement";
 import Lane from "./lane";
 import { Note } from "./note";
 import Skin from "./skin";
@@ -25,7 +25,12 @@ export default class Playfield
         this.scoreboard = scoreboard;
     }
 
-    update(time: number, setUiState: (a: any) => any, laneState: boolean[])
+    initScene(scene: THREE.Scene)
+    {
+        this.lanes.forEach(l => l.initScene(scene));
+    }
+
+    update(time: number, laneState: boolean[])
     {
         const autoPlay = (n: Note): boolean => {
             const st = n.startTime;

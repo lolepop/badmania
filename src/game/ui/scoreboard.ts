@@ -1,4 +1,4 @@
-import { IJudgement } from "../judge/IJudgement";
+import { IJudgement } from "../judge/judgement";
 
 export interface ScoreboardState
 {

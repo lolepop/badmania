@@ -1,18 +1,14 @@
 import * as THREE from "three";
 import osuMapUrl from "../map1.osu?raw";
-import Stats from "stats.js";
 import { Howl } from "howler";
 import Playfield from "./playfield";
 import Skin from "./skin";
 import KeyboardInput from "../input/keyboard";
-import { EtternaJudgement } from "./judge/IJudgement";
 import Scoreboard from "./ui/scoreboard";
+import EtternaJudgement from "./judge/etterna";
+import GameEngine from "./engine";
 
 export default (canvas: HTMLCanvasElement, setUiState: (a: any) => any) => {
-    const stats = new Stats();
-    stats.showPanel(1);
-    document.body.appendChild(stats.dom);
-
     const canvasSize = canvas.getBoundingClientRect();
     console.log(canvasSize);
 
@@ -41,20 +37,17 @@ export default (canvas: HTMLCanvasElement, setUiState: (a: any) => any) => {
     }
 
     let speed = .0035;
-    let updateTime = -1;
-    let time = 0;
 
     const keyboard = new KeyboardInput();
     keyboard.setup();
 
     const field = new Playfield(speed, new Skin(renderer), new EtternaJudgement(4), new Scoreboard(setUiState));
-    field.loadOsuMap(osuMapUrl)
+    field.loadOsuMap(osuMapUrl);
+    field.initScene(scene);
     console.log(field);
-    // return;
 
     field.lanes.forEach((l, i) => {
         l.laneGroup.position.x = i / field.lanes.length;
-        scene.add(l.laneGroup);
     });
 
     const audio = new Howl({
@@ -62,36 +55,20 @@ export default (canvas: HTMLCanvasElement, setUiState: (a: any) => any) => {
         volume: 0.1
     });
 
-    function render()
+    function render(delta: number)
     {
-        stats.begin();
 
         handleResize(renderer, camera);
 
-        // const nowTime = new Date().getTime();
-        const nowTime = performance.now();
-        if (updateTime > 0)
-            time += nowTime - updateTime;
-        updateTime = nowTime;
-
-        const error = time - (audio.seek() as number) * 1000;
-        if (Math.abs(error) > 10)
-        {
-            // console.log(`error over threshold: ${error}`);
-            time = (audio.seek() as number) * 1000;
-        }
-
         // console.log(field.lanes[0].notes[0].state);
 
-        field.update(time, setUiState, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
+        field.update(delta, [keyboard.isPressed("z"), keyboard.isPressed("x"), keyboard.isPressed(","), keyboard.isPressed(".")]);
 
         renderer.renderLists.dispose();
         renderer.render(scene, camera);
-        // return;
-        stats.end();
-        requestAnimationFrame(render);
     }
 
-    audio.on("play", () => requestAnimationFrame(render));
-    audio.play();
+    const gameEngine = new GameEngine(audio, render);
+    gameEngine.start();
+
 };
