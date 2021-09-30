@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Chart } from "../parser/chart";
 import OsuMap from "../parser/osu";
 import { IJudgement } from "./judge/judgement";
 import Lane from "./lane";
@@ -15,7 +16,6 @@ export default class Playfield
     lanes: Lane[];
     judgement: IJudgement;
     noteQueue: FastNoteQueue;
-    // TODO: create scorekeeper and pass into lane.handleNoteInput. use notehitindex to calculate accuracy
 
     constructor(speed: number, skin: Skin, judgement: IJudgement, scoreboard: Scoreboard)
     {
@@ -58,23 +58,16 @@ export default class Playfield
         this.scoreboard.update();
     }
 
-    loadOsuMap(obj: string)
+    loadChart(chart: Chart)
     {
-        const map = OsuMap.fromString(obj);
-        console.log(map);
+        console.log(chart);
         
-        const keys = parseInt(map.Difficulty.CircleSize);
+        const keys = chart.keys;
         
-        this.lanes = map.HitObjects.reduce((acc, o) => {
-            const lane = Math.trunc(o.x * keys / 512);
+        this.lanes = chart.notes.reduce((acc, o) => {
+            const lane = o.lane;
             const currLane = acc.laneObjects[lane];
-
-            // if (lane !== 0) return acc;
-            
-            if (o.type === "maniaHold")
-                currLane.addNote(o.time, (<any>o).endTime);
-            else
-                currLane.addNote(o.time);
+            currLane.addNote(o.startTime, o.endTime);
 
             return acc;
         }, {

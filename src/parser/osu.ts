@@ -1,9 +1,10 @@
+import { IChartParser, Chart, Note } from "./chart";
 
 const isNum = (v: any) => !isNaN(+v);
 const intToBitArr = (n: number, bits: number) => [...Array(bits)].map((x, i) => n >> i & 1);
 const bitArrToInt = (arr: number[]) => arr.reduce((acc: number, v: number) => (acc << 1) | v);
 
-export default class OsuMap
+export default class OsuMap implements IChartParser
 {
     formatVersion?: Number;
     General: { [key: string]: any } = {};
@@ -116,13 +117,11 @@ export default class OsuMap
         }
     }
 
-    static fromString(obj: string)
+    fromString(obj: string)
     {
         const csvIndices = new Set(["Events", "TimingPoints", "HitObjects"]);
 
         const lines = obj.split(/\r?\n/g);
-
-        const map = new OsuMap();
 
         let currHeader: string | null = null;
         for (const [i, _line] of lines.entries())
@@ -136,7 +135,7 @@ export default class OsuMap
             if (i === 0)
             {
                 // theres no ?[] operator why   ??????????????????????
-                map.formatVersion = parseInt((line.match(/osu file format v(\d+)/) || [])[1]);
+                this.formatVersion = parseInt((line.match(/osu file format v(\d+)/) || [])[1]);
                 continue;
             }
 
@@ -153,7 +152,7 @@ export default class OsuMap
             if (currHeader === null)
                 continue;
 
-            const header = (map as any)[currHeader];
+            const header = (this as any)[currHeader];
             if (!csvIndices.has(currHeader))
             {
                 // key: value pair
@@ -174,7 +173,18 @@ export default class OsuMap
 
         }
 
-        return map;
-
     }
+
+    toChart()
+    {
+        const keys = parseInt(this.Difficulty.CircleSize);
+        const notes = this.HitObjects.reduce<Note[]>((acc, o) => acc.concat({
+            lane: Math.trunc(o.x * keys / 512),
+            startTime: o.time,
+            endTime: o.type === "maniaHold" ? (<any>o).endTime : undefined
+        }), []);
+        
+        return {keys, notes};
+    }
+
 }
