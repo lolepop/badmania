@@ -156,7 +156,7 @@ export default class OsuMap implements IChartParser
             if (!csvIndices.has(currHeader))
             {
                 // key: value pair
-                const propertykv = line.match(/(\w+)[ ]*:[ ]*(\w+)/) || [];
+                const propertykv = line.match(/(\w+)[ ]*:[ ]*(.+)/) || [];
                 if (propertykv.length > 0)
                 {
                     header[propertykv[1]] = propertykv[2];

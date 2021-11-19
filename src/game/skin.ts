@@ -1,11 +1,17 @@
 import * as THREE from "three";
 
+import note from "../../textures/note.png";
+import holdbody from "../../textures/holdbody.png";
+import holdcap from "../../textures/holdcap.png";
+import receptor from "../../textures/receptor.png";
+import receptoractive from "../../textures/receptoractive.png";
+
 export default class Skin
 {
     noteScale: number = 0.23;
     receptorOffset: number = 0.1; // vertical offset of hit receptors from edge of screen
     
-    renderer: THREE.WebGLRenderer;
+    // renderer: THREE.WebGLRenderer;
 
     noteGeometry: THREE.BoxGeometry;
     holdBodyGeometry: THREE.BoxGeometry;
@@ -16,10 +22,9 @@ export default class Skin
     noteReceptorMaterial: THREE.MeshBasicMaterial;
     noteReceptorActiveMaterial: THREE.MeshBasicMaterial;
 
-    constructor(renderer: THREE.WebGLRenderer)
+    // pass in graphics settings?
+    constructor()
     {
-        this.renderer = renderer;
-
         this.noteGeometry = new THREE.BoxGeometry(1, 1, 1);
         this.noteGeometry.translate(0, 1/2, 0);
         this.noteGeometry.scale(this.noteScale, this.noteScale, 1);
@@ -31,16 +36,22 @@ export default class Skin
 
         const textureLoader = new THREE.TextureLoader();
 
-        this.noteMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/note.png")), transparent: true });
-        this.holdBodyMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/holdbody.png")), transparent: true });
-        this.holdCapMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/holdcap.png")), transparent: true });
-        this.noteReceptorMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/receptor.png")), transparent: true});
-        this.noteReceptorActiveMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/receptoractive.png")), transparent: true});
+        this.noteMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load(note)), transparent: true });
+        this.holdBodyMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load(holdbody)), transparent: true });
+        this.holdCapMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load(holdcap)), transparent: true });
+        this.noteReceptorMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load(receptor)), transparent: true});
+        this.noteReceptorActiveMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load(receptoractive)), transparent: true});
+
+        // this.noteMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("textures/note.png")), transparent: true });
+        // this.holdBodyMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/holdbody.png")), transparent: true });
+        // this.holdCapMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/holdcap.png")), transparent: true });
+        // this.noteReceptorMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/receptor.png")), transparent: true});
+        // this.noteReceptorActiveMaterial = new THREE.MeshBasicMaterial({ map: this.applyTextureSettings(textureLoader.load("/textures/receptoractive.png")), transparent: true});
     }
 
     applyTextureSettings(map: THREE.Texture)
     {
-        map.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+        map.anisotropy = 8;
         map.minFilter = THREE.NearestFilter;
         map.magFilter = THREE.NearestFilter;
         return map;

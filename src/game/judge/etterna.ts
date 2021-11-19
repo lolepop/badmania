@@ -1,5 +1,5 @@
 import { HitJudge, IJudgement } from "./judgement";
-import * as Util from "../../util";
+import * as Util from "../../util/math";
 
 // etterna calculations taken from official repo: https://github.com/etternagame/etterna/
 // https://www.desmos.com/calculator/qebv9dcoll
